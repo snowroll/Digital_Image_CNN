@@ -1,27 +1,17 @@
 # -*- coding: utf-8 -*-
 import numpy as np
+import math
 from PIL import Image
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import scipy.signal as signal
 import copy
+import csv
 
 #1. 图片大小一致　最好是正方形
 #2. 8张图片转成csv
 #3. label pixel..
 #4. 标注　先空着
-
-# 矩阵旋转函数
-def rotate(matrix):
-    # J = I
-    # for i in range(len(J)-1):
-    #     for j in range(len(J[i])):
-    #         if j > i :
-    #             tmp = J[i][j]
-    #             J[i][j] = J[j][i]
-    #             J[j][i] = tmp 
-    # return J
-    matrix[:] = map(list, zip(*matrix[::-1]))
 
 # 生成高斯算子的函数
 def func(x, y, sigma = 1):
@@ -36,6 +26,7 @@ Laplace_ex = np.array([[1, 1, 1],
                     [1, 1, 1]])
 
 # 调整图片为正方形大小，方便后期处理
+file_path
 Ori_img = Image.open("1.png")
 (x, y) = Ori_img.size
 re_s = min(x, y)
@@ -44,39 +35,71 @@ Re_img = Ori_img.resize((re_s, re_s), Image.ANTIALIAS)
 #image = Image.open("lena.bmp").convert("L")
 image = Re_img.convert("L")
 image_array = np.array(image)
-
+print(image_array)
 # 利用生成的高斯算子与原图像进行卷积对图像进行平滑处理
 image_blur = signal.convolve2d(image_array, Gaussion, mode="same")
-
+print("smooth")
+print(image_blur)
 # 对平滑后的图像进行边缘检测
 image2 = signal.convolve2d(image_blur, Laplace_ex, mode="same")
-
+print("boundary detection")
+print(image2)
 # 结果转化到0-255
-image2 = (image2/float(image2.max()))*255
+image2 = ((image2 - image2.min()) / float(image2.max() - image2.min())) * 255
+print("0-255")
+print(image2)
 
 # 将大于灰度平均值的灰度值变成255（白色），便于观察边缘
 image2[image2>image2.mean()] = 255
+print(image2)
 
-image_0_l = np.fliplr(image2)
-image_90 = np.rot90(image2)  #防止赋值后由于指针的改变导致元素改变
-image_90_l = np.fliplr(image_90)
-image_180  = np.rot90(image_90)
-image_180_l = np.fliplr(image_180)
-image_270 = np.rot90(image_180)
-image_270_l = np.fliplr(image_270)
-# image_270 = copy.copy(rotate(image2))
+out = open('test.csv', 'a', newline = '')
+csv_write = csv.writer(out, dialect = 'excel')
+
+first_label = ['label']
+pixel_num = re_s * re_s
+for i in range(0, pixel_num):  #填写第一行
+    label_str = 'pixel' + str(i)
+    first_label.append(label_str)
+csv_write.writerow(first_label)
+
+tmp_image = image2 
+for i in range(0, 4):  #旋转４次　对称４次　得８张测试图
+    pixel_l = ['']
+    pixel_r = ['']
+    tmp_image_l = np.fliplr(tmp_image)
+    plt.subplot(3,1,1)
+    plt.imshow(tmp_image_l,cmap = cm.gray)
+    plt.axis("off")
+    plt.show()
+    #plt.subplot(3,1,2)
+    #tmp_image_l = (tmp_image_l / float(tmp_image_l.max())) * 255
+    tmp_image = np.rot90(tmp_image)
+    #tmp_image = (image2/float(image2.max()))*255
+    for j in range(0, pixel_num):
+        pixel_l.append(tmp_image_l[(j // re_s), (j % re_s)])
+        pixel_r.append(tmp_image[(j // re_s), (j % re_s)])
+    csv_write.writerow(pixel_l)
+    csv_write.writerow(pixel_r)
+
+
+
+
+#csv_write.writerow(stu1)
+#csv_write.writerow(stu2)
+print("write over")
 
 
 
 
 # 显示图像
-plt.subplot(3,1,1)
-plt.imshow(image_array,cmap = cm.gray)
-plt.axis("off")
-plt.subplot(3,1,2)
-plt.imshow(image_90_l,cmap = cm.gray)
-plt.axis("off")
-plt.subplot(3,1,3)
-plt.imshow(image_90,cmap = cm.gray)
-plt.axis("off")
-plt.show()
+# plt.subplot(3,1,1)
+# plt.imshow(image_array,cmap = cm.gray)
+# plt.axis("off")
+# plt.subplot(3,1,2)
+# plt.imshow(image_90_l,cmap = cm.gray)
+# plt.axis("off")
+# plt.subplot(3,1,3)
+# plt.imshow(image_90,cmap = cm.gray)
+# plt.axis("off")
+# plt.show()
