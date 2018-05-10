@@ -44,8 +44,10 @@ image2 = signal.convolve2d(image_blur, Laplace_ex, mode="same")
 # 结果转化到0-255
 image2 = ((image2 - image2.min()) / float(image2.max() - image2.min())) * 255
 
-# 将大于灰度平均值的灰度值变成255（白色），便于观察边缘
-image2[image2>image2.mean()] = 255
+# image2.mean() 灰度均值　大于255 小于0 二值化
+image2[image2 > image2.mean()] = 255
+image2[image2 <= image2.mean()] = 0
+
 print(image2)
 
 out = open('test.csv', 'a', newline = '')
